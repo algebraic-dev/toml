@@ -1,4 +1,4 @@
-package Toml
+package toml
 
 modules = Main
 depends = contrib
