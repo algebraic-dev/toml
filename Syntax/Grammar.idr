@@ -28,7 +28,7 @@ Rule ty = Grammar (TokenData TokenKind) True ty
 
 term : TokenKind -> Rule ()
 term y = terminal ("Expected Symbol")
-     (\x => if eq_tkn (TokenData.tok x) y then 
+     (\x => if eqTknTag (TokenData.tok x) y then 
                Just ()
             else 
                Nothing)
@@ -148,18 +148,16 @@ parseToml : String -> Either
                          (Toml)
 
 parseToml str = 
-     let res = (lexToml str) in
-     case res of 
-       Left (line, column) => 
-          Left (LexicalErr (MkPos line column))
-       Right list => 
-          (case parse (toml) list of 
-               Left (Error x y) => 
-                    Left (case y of 
-                         hd::_ => 
-                              let pos = (MkPos 
-                                             (TokenData.line hd) 
-                                             (TokenData.col hd)) in
-                              (ParsingErr x pos)
-                         _     => EofErr)
-               Right (value, _) => Right value)
+  let res = (lexToml str) in
+  case res of 
+    Left (line, column) => 
+      Left (LexicalErr (MkPos line column))
+    Right list => 
+      (case parse (toml) list of 
+        Left (Error x y) => 
+          Left (case y of 
+            hd::_ => 
+                let pos = (MkPos (TokenData.line hd) (TokenData.col hd)) in
+                (ParsingErr x pos)
+            _     => EofErr)
+        Right (value, _) => Right value)

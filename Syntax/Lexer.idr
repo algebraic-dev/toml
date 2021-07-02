@@ -27,23 +27,23 @@ data TokenKind
 -- They just have the same tkn
 
 public export 
-eq_tkn : TokenKind -> TokenKind -> Bool
-eq_tkn (StringLit _) (StringLit _) = True
-eq_tkn (DateLit _) (DateLit _) = True
-eq_tkn (NumberLit _) (NumberLit _) = True
-eq_tkn (FloatLit _) (FloatLit _) = True
-eq_tkn (Identifier _) (Identifier _) = True
-eq_tkn FalseLit FalseLit = True
-eq_tkn TrueLit TrueLit = True
-eq_tkn (Comment _) (Comment _) = True
-eq_tkn Eq Eq = True
-eq_tkn Comma Comma = True
-eq_tkn Dot Dot = True
-eq_tkn LCurly LCurly = True
-eq_tkn RCurly RCurly = True
-eq_tkn LBracket LBracket = True
-eq_tkn RBracket RBracket = True
-eq_tkn a b = False
+eqTknTag : TokenKind -> TokenKind -> Bool
+eqTknTag (StringLit _) (StringLit _) = True
+eqTknTag (DateLit _) (DateLit _) = True
+eqTknTag (NumberLit _) (NumberLit _) = True
+eqTknTag (FloatLit _) (FloatLit _) = True
+eqTknTag (Identifier _) (Identifier _) = True
+eqTknTag FalseLit FalseLit = True
+eqTknTag TrueLit TrueLit = True
+eqTknTag (Comment _) (Comment _) = True
+eqTknTag Eq Eq = True
+eqTknTag Comma Comma = True
+eqTknTag Dot Dot = True
+eqTknTag LCurly LCurly = True
+eqTknTag RCurly RCurly = True
+eqTknTag LBracket LBracket = True
+eqTknTag RBracket RBracket = True
+eqTknTag a b = False
 
 public export 
 Show TokenKind where 
@@ -72,37 +72,34 @@ opChars = "+-*"
 operator : Lexer
 operator = some (oneOf opChars)
 
-toInt' : String -> Integer
-toInt' = cast
-
 public export
 keyword : Lexer
 keyword = some (pred (\x => isAlphaNum x || x == '-' || x == '_'))
 
 public export
 string : Lexer
-string = (is '"') <+> some (pred (\x => x /= '"')) <+> (is '"')
+string = (is '"') <+> some (pred (/= '"')) <+> (is '"')
 
 public export
 comment : Lexer
-comment = (is '#') <+> some (pred (\x => x /= '\n')) <+> ((is '\n') <|> empty)
+comment = (is '#') <+> some (pred (/= '\n')) <+> ((is '\n') <|> empty)
 
 public export
 token_map : TokenMap TokenKind
 token_map =
    [(digits <+> (is '.') <+> digits, \x => FloatLit (cast x)), 
-   (digits, \x => NumberLit (cast x)),
-   (is '[' ,\x => LBracket),
-   (is ']' ,\x => RBracket),
-   (is '{' ,\x => LCurly),
-   (is '}' ,\x => RCurly),
-   (comment ,\x => Comment x),
-   (is '=' ,\x => Eq),
-   (is '.' ,\n => Dot),
-   (is ',' ,\n => Comma),
-   (string ,\x => StringLit x),
-   (space  ,\x => Whitespace),
-   (is '\n' <|> is '\r', \x => Whitespace),
+   (digits  , NumberLit . cast),
+   (is '['  , const LBracket),
+   (is ']'  , const  RBracket),
+   (is '{'  , const  LCurly),
+   (is '}'  , const  RCurly),
+   (space   , const Whitespace),
+   (is '='  , const  Eq),
+   (is '.'  , const Dot),
+   (is ','  , const Comma),
+   (comment , Comment),
+   (string  , StringLit),
+   (is '\n' <|> is '\r', const Whitespace),
    (keyword, \x => case x of 
             "true" => TrueLit
             "false" => FalseLit
@@ -121,7 +118,6 @@ public export
 lexToml : String -> Either (Int, Int) (List (TokenData TokenKind))
 lexToml str
   = case lex token_map str of
-         (tokens, _, _, "") => Right 
-            $ (filter removeUseless tokens)
-         (_, line, column, _) => Left $ (line, column)
+         (tokens, _, _, "") => Right(filter removeUseless tokens)
+         (_, line, column, _) => Left (line, column)
 
