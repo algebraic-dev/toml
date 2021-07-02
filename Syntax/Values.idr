@@ -1,6 +1,6 @@
-module Values
+module Syntax.Values
 
-import Lexer 
+import Syntax.Lexer 
 import Data.SortedMap
 import Data.List
 

@@ -1,11 +1,11 @@
-module Toml
+module Main
 
 import Data.SortedMap
 import Text.Parser
-import Values 
+import Syntax.Values 
 import Data.List
-import Lexer
-import Grammar
+import Syntax.Lexer
+import Syntax.Grammar
 
 public export 
 deserialize : String -> Either String Toml

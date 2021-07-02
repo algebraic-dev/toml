@@ -1,12 +1,13 @@
-module Grammar
+module Syntax.Grammar
 
-import Lexer
-import Values
+import Syntax.Lexer
+import Syntax.Values
 import Text.Parser
 import Text.Lexer.Core
 import Data.List
 import Data.String.Extra
 import Data.SortedMap
+import Data.List1
 
 public export 
 insertPath : Toml -> List (String) -> Value -> Toml 
@@ -25,10 +26,10 @@ public export
 Rule : Type -> Type
 Rule ty = Grammar (TokenData TokenKind) True ty
 
-term : TokenKind -> Rule Bool
+term : TokenKind -> Rule ()
 term y = terminal ("Expected Symbol")
      (\x => if eq_tkn (TokenData.tok x) y then 
-               Just True
+               Just ()
             else 
                Nothing)
 
@@ -73,16 +74,16 @@ identifier = (term_ret (\n =>
 
 brackets : Rule Value -> Rule Value 
 brackets exp = do 
-     (term LBracket)
-     r <- sepBy1 (term Comma) exp
-     (term RBracket)
+     term LBracket
+     r <- forget <$> sepBy1 (term Comma) exp
+     term RBracket
      pure (VArray r)
 
 
 empty_array : Rule Value 
 empty_array = do 
-     (term LBracket)
-     (term RBracket)
+     term LBracket
+     term RBracket
      pure (VArray [])
 
 createArrayTypes : List (Rule Value) -> Rule Value 
@@ -122,13 +123,13 @@ fst name =
 
 
 path : Rule (List String)
-path = sepBy1 (term Dot) (identifier)
+path = forget <$> sepBy1 (term Dot) (identifier)
 
 table : Rule ((List String), Value)
 table = do 
-     (term LBracket)
+     term LBracket
      name <- path 
-     (term RBracket)
+     term RBracket
      pair <- many keyValue
      pure (
           name, 
